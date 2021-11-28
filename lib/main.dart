@@ -17,7 +17,7 @@ class WayToStars extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       theme: ThemeData(
-        textTheme: GoogleFonts.firaSansTextTheme(),
+        textTheme: GoogleFonts.ptSansTextTheme(),
         primarySwatch: Colors.teal,
       ),
       home: const HomePage(),
