@@ -10,4 +10,7 @@ class ToDoList {
   Map<String, dynamic> toMap() {
     return {'id': id, 'title': title};
   }
+
+  @override
+  String toString() => title;
 }

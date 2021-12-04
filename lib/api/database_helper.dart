@@ -35,8 +35,10 @@ class DatabaseHelper {
     return List.generate(taskMap.length, (i) {
       return Task(
           id: taskMap[i]['id'],
+          listId: taskMap[i]['listid'],
           title: taskMap[i]['title'],
-          description: taskMap[i]['description']);
+          description: taskMap[i]['description'],
+          isDone: taskMap[i]['isDone']);
     });
   }
 
@@ -46,5 +48,36 @@ class DatabaseHelper {
     return List.generate(listMap.length, (i) {
       return ToDoList(id: listMap[i]['id'], title: listMap[i]['title']);
     });
+  }
+
+  Future<ToDoList> getList(listId) async {
+    Database _db = await database();
+    List<Map> listMap = await _db.query('lists',
+        columns: ['id', 'title'], where: 'id=?', whereArgs: [listId]);
+    var result = List.generate(listMap.length, (i) {
+      return ToDoList(id: listMap[i]['id'], title: listMap[i]['title']);
+    });
+    return result.first;
+  }
+
+  Future<List<Task>> getListTasks(listid) async {
+    Database _db = await database();
+    List<Map> taskMap = await _db.query('tasks',
+        columns: ['id', 'listid', 'title', 'description', 'isDone'],
+        where: 'listid=?',
+        whereArgs: [listid]);
+    return List.generate(taskMap.length, (i) {
+      return Task(
+          id: taskMap[i]['id'],
+          listId: taskMap[i]['listid'],
+          title: taskMap[i]['title'],
+          description: taskMap[i]['description'],
+          isDone: taskMap[i]['isDone']);
+    });
+  }
+
+  void printList(id) async {
+    var list = await getList(id);
+    print(list.toString());
   }
 }

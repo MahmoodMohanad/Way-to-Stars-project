@@ -12,13 +12,14 @@ class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  State<HomePage> createState() => HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class HomePageState extends State<HomePage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-
   final DatabaseHelper _dbHelper = DatabaseHelper();
+  var currentListId = 1;
+  var currentList = DatabaseHelper().getList(1);
 
   @override
   void initState() {
@@ -31,55 +32,72 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       key: _scaffoldKey,
       drawer: Drawer(
-        child: FutureBuilder(
-            initialData: const [],
-            future: _dbHelper.getLists(),
-            builder: (context, AsyncSnapshot snapshot) {
-              return ListView(
-                physics: const NeverScrollableScrollPhysics(),
-                padding: EdgeInsets.zero,
+          child: Container(
+        padding: EdgeInsets.zero,
+        child: Column(
+          children: [
+            DrawerHeader(
+              decoration: BoxDecoration(color: Colors.teal[300]),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  DrawerHeader(
-                    decoration: BoxDecoration(color: Colors.teal[300]),
-                    child: const Text(
-                      'Way to Stars',
-                      style:
-                          TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                    ),
+                  const Text(
+                    'Way to Stars',
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
                   GestureDetector(
                       onTap: () {
-                        Navigator.push(context,
-                            MaterialPageRoute(builder: (context) => NewList()));
+                        Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => NewList()))
+                            .then((value) => setState(() {}));
                       },
-                      child: ListTile(
-                        title: Row(
-                          children: [
-                            Icon(Icons.add),
-                            Text(
-                              'New list',
-                              style: TextStyle(
-                                  fontSize: 20, fontWeight: FontWeight.bold),
-                            )
-                          ],
-                        ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Icon(Icons.add),
+                          Text(
+                            'New list',
+                            style: TextStyle(
+                                fontSize: 20, fontWeight: FontWeight.bold),
+                          )
+                        ],
                       )),
-                  ListView.builder(
-                      padding: EdgeInsets.zero,
-                      shrinkWrap: true,
-                      itemCount: snapshot.data.length,
-                      itemBuilder: (context, index) {
-                        return ListTile(
-                          title: Text(
-                            snapshot.data[index].title,
-                            style: TextStyle(fontSize: 20),
-                          ),
-                        );
-                      })
                 ],
-              );
-            }),
-      ),
+              ),
+            ),
+            Expanded(
+              child: FutureBuilder(
+                  initialData: const [],
+                  future: _dbHelper.getLists(),
+                  builder: (context, AsyncSnapshot snapshot) {
+                    return ListView.builder(
+                        padding: EdgeInsets.zero,
+                        shrinkWrap: true,
+                        itemCount: snapshot.data.length,
+                        itemBuilder: (context, index) {
+                          return GestureDetector(
+                            onTap: () {
+                              currentListId = snapshot.data[index].id;
+                              currentList =
+                                  DatabaseHelper().getList(currentListId);
+                              setState(() {});
+                            },
+                            child: ListTile(
+                              title: Text(
+                                snapshot.data[index].title,
+                                style: TextStyle(fontSize: 20),
+                              ),
+                            ),
+                          );
+                        });
+                  }),
+            )
+          ],
+        ),
+      )),
       bottomNavigationBar: BottomAppBar(
         shape: const CircularNotchedRectangle(),
         notchMargin: 5,
@@ -123,7 +141,8 @@ class _HomePageState extends State<HomePage> {
                             onSubmitted: (value) async {
                               if (value != "") {
                                 DatabaseHelper _dbHelper = DatabaseHelper();
-                                Task _newTask = Task(title: value);
+                                Task _newTask =
+                                    Task(title: value, listId: currentListId);
                                 await _dbHelper
                                     .insertTask(_newTask)
                                     .then((value) => Navigator.pop(context))
@@ -157,29 +176,53 @@ class _HomePageState extends State<HomePage> {
         centerTitle: true,
       ),
       body: Container(
+          height: double.infinity,
           color: Colors.teal[50],
-          child: FutureBuilder(
-            initialData: const [],
-            future: _dbHelper.getTasks(),
-            builder: (context, AsyncSnapshot snapshot) {
-              return ListView.builder(
-                  itemCount: snapshot.data.length,
-                  itemBuilder: (context, index) {
-                    return GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) =>
-                                  TaskPage(task: snapshot.data[index])),
+          child: ListView(
+            shrinkWrap: true,
+            children: [
+              Align(
+                alignment: AlignmentDirectional.topStart,
+                child: FutureBuilder(
+                    future: currentList,
+                    builder: (context, AsyncSnapshot snapshot) {
+                      var title = snapshot.data.toString();
+                      return Padding(
+                        padding: const EdgeInsets.only(
+                            top: 10, bottom: 5, left: 20, right: 20),
+                        child: Text(
+                          title,
+                          style: TextStyle(fontSize: 18, color: Colors.black87),
+                        ),
+                      );
+                    }),
+              ),
+              FutureBuilder(
+                initialData: const [],
+                future: _dbHelper.getListTasks(currentListId),
+                builder: (context, AsyncSnapshot snapshot) {
+                  return ListView.builder(
+                      physics: NeverScrollableScrollPhysics(),
+                      shrinkWrap: true,
+                      itemCount: snapshot.data.length,
+                      itemBuilder: (context, index) {
+                        return GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      TaskPage(task: snapshot.data![index])),
+                            );
+                          },
+                          child: TaskCard(
+                            title: snapshot.data[index].title,
+                          ),
                         );
-                      },
-                      child: TaskCard(
-                        title: snapshot.data[index].title,
-                      ),
-                    );
-                  });
-            },
+                      });
+                },
+              ),
+            ],
           )),
     );
   }
