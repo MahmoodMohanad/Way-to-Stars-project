@@ -22,12 +22,6 @@ class HomePageState extends State<HomePage> {
   var currentList = DatabaseHelper().getList(1);
 
   @override
-  void initState() {
-    asyncMethod();
-    super.initState();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldKey,
@@ -225,14 +219,5 @@ class HomePageState extends State<HomePage> {
             ],
           )),
     );
-  }
-}
-
-asyncMethod() async {
-  DatabaseHelper _dbHelper = DatabaseHelper();
-  ToDoList _newList = ToDoList(title: 'My Tasks');
-  var list = await _dbHelper.getLists();
-  if (list.isEmpty) {
-    await _dbHelper.insertList(_newList);
   }
 }

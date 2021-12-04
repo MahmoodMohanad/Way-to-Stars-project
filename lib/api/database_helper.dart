@@ -12,6 +12,8 @@ class DatabaseHelper {
             "CREATE TABLE tasks(id INTEGER PRIMARY KEY, listid INTEGER, title TEXT, description TEXT, isDone INTEGER)");
         await db
             .execute("CREATE TABLE lists(id INTEGER PRIMARY KEY, title TEXT)");
+        ToDoList _newList = ToDoList(title: 'My Tasks');
+        await db.insert('lists', _newList.toMap());
       },
       version: 1,
     );
