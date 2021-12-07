@@ -52,7 +52,7 @@ class DatabaseHelper {
     });
   }
 
-  Future<ToDoList> getList(listId) async {
+  Future<ToDoList> getList(int listId) async {
     Database _db = await database();
     List<Map> listMap = await _db.query('lists',
         columns: ['id', 'title'], where: 'id=?', whereArgs: [listId]);
@@ -62,12 +62,12 @@ class DatabaseHelper {
     return result.first;
   }
 
-  Future<List<Task>> getListTasks(listid) async {
+  Future<List<Task>> getListTasks(int listId) async {
     Database _db = await database();
     List<Map> taskMap = await _db.query('tasks',
         columns: ['id', 'listid', 'title', 'description', 'isDone'],
         where: 'listid=?',
-        whereArgs: [listid]);
+        whereArgs: [listId]);
     return List.generate(taskMap.length, (i) {
       return Task(
           id: taskMap[i]['id'],
@@ -78,8 +78,19 @@ class DatabaseHelper {
     });
   }
 
-  void printList(id) async {
-    var list = await getList(id);
-    print(list.toString());
+  Future<void> updateTask(Task task) async {
+    Database _db = await database();
+    await _db
+        .update('tasks', task.toMap(), where: 'id=?', whereArgs: [task.id]);
+  }
+
+  Future<void> deleteTask(int id) async {
+    Database _db = await database();
+    await _db.delete('tasks', where: 'id=?', whereArgs: [id]);
+  }
+
+  Future<void> deleteList(int id) async {
+    Database _db = await database();
+    await _db.delete('lists', where: 'id=?', whereArgs: [id]);
   }
 }

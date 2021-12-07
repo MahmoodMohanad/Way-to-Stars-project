@@ -4,35 +4,53 @@ import 'package:flutter_project/models/list.dart';
 
 import 'homepage.dart';
 
-class NewList extends StatelessWidget {
+class NewList extends StatefulWidget {
   NewList({Key? key}) : super(key: key);
 
-  final HomePageKey = GlobalKey<HomePageState>();
+  @override
+  State<NewList> createState() => _NewListState();
+}
+
+class _NewListState extends State<NewList> {
+  final newListController = TextEditingController();
+
+  @override
+  void dispose() {
+    newListController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Create new list'),
-        actions: [TextButton(onPressed: () {}, child: const Text('Done'))],
+        actions: [
+          TextButton(
+            onPressed: () async {
+              if (newListController.text != "") {
+                DatabaseHelper _dbHelper = DatabaseHelper();
+                ToDoList _newList = ToDoList(
+                  title: newListController.text,
+                );
+                await _dbHelper
+                    .insertList(_newList)
+                    .then((_newList) => Navigator.pop(context));
+              }
+            },
+            child: const Text(
+              'Done',
+              style: TextStyle(fontSize: 18),
+            ),
+            style: TextButton.styleFrom(primary: Colors.white),
+          )
+        ],
       ),
-      body: Container(
-        child: TextField(
-          onSubmitted: (value) async {
-            if (value != "") {
-              DatabaseHelper _dbHelper = DatabaseHelper();
-              ToDoList _newList = ToDoList(
-                title: value,
-              );
-              await _dbHelper
-                  .insertList(_newList)
-                  .then((value) => Navigator.pop(context));
-            }
-          },
-          autofocus: true,
-          decoration: InputDecoration(
-              border: OutlineInputBorder(), hintText: 'Enter list name'),
-        ),
+      body: TextField(
+        controller: newListController,
+        autofocus: true,
+        decoration: const InputDecoration(
+            border: OutlineInputBorder(), hintText: 'Enter list name'),
       ),
     );
   }

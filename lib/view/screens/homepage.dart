@@ -18,6 +18,8 @@ class HomePage extends StatefulWidget {
 class HomePageState extends State<HomePage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final DatabaseHelper _dbHelper = DatabaseHelper();
+  final taskTitleController = TextEditingController();
+  final taskDescriptionController = TextEditingController();
   var currentListId = 1;
   var currentList = DatabaseHelper().getList(1);
 
@@ -78,11 +80,12 @@ class HomePageState extends State<HomePage> {
                               currentList =
                                   DatabaseHelper().getList(currentListId);
                               setState(() {});
+                              Navigator.pop(context);
                             },
                             child: ListTile(
                               title: Text(
                                 snapshot.data[index].title,
-                                style: TextStyle(fontSize: 20),
+                                style: const TextStyle(fontSize: 20),
                               ),
                             ),
                           );
@@ -104,8 +107,95 @@ class HomePageState extends State<HomePage> {
                 },
                 icon: const Icon(Icons.menu)),
             const Spacer(),
-            IconButton(icon: const Icon(Icons.search), onPressed: () {}),
-            IconButton(icon: const Icon(Icons.more_vert), onPressed: () {}),
+            IconButton(
+              onPressed: () {
+                showModalBottomSheet(
+                    isScrollControlled: true,
+                    shape: const RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.vertical(top: Radius.circular(5))),
+                    context: context,
+                    builder: (context) {
+                      return Padding(
+                        padding: EdgeInsets.only(
+                            bottom: MediaQuery.of(context).viewInsets.bottom),
+                        child: Container(
+                          padding: const EdgeInsets.only(
+                              top: 10, left: 15, right: 15),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              ListTile(
+                                title: Text('Delete List'),
+                                onTap: () {
+                                  if (currentListId == 1) {
+                                    showDialog(
+                                        context: context,
+                                        builder: (context) {
+                                          return AlertDialog(
+                                              title: const Text('Note'),
+                                              content: const Text(
+                                                  'You can\'t remove the default to do list'),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () =>
+                                                      Navigator.pop(
+                                                          context, 'Close'),
+                                                  child: const Text('Close'),
+                                                ),
+                                              ]);
+                                        });
+                                  } else {
+                                    showDialog(
+                                      context: context,
+                                      builder: (BuildContext context) =>
+                                          AlertDialog(
+                                        title: const Text('Alert'),
+                                        content: const Text(
+                                            'Are you sure you want to delete this list?'),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () => Navigator.pop(
+                                                context, 'Cancel'),
+                                            child: const Text('Cancel'),
+                                          ),
+                                          TextButton(
+                                            onPressed: () {
+                                              _dbHelper
+                                                  .deleteList(currentListId)
+                                                  .then((value) =>
+                                                      Navigator.pop(context))
+                                                  .then((value) =>
+                                                      Navigator.pop(context))
+                                                  .then(
+                                                    (value) => setState(() {
+                                                      currentListId = 1;
+                                                      currentList =
+                                                          DatabaseHelper()
+                                                              .getList(
+                                                                  currentListId);
+                                                    }),
+                                                  );
+                                            },
+                                            child: const Text('Delete'),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  }
+                                },
+                              ),
+                              ListTile(
+                                title: Text('Delete all completed tasks'),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    });
+              },
+              icon: const Icon(Icons.more_vert),
+            )
           ],
         ),
       ),
@@ -128,35 +218,42 @@ class HomePageState extends State<HomePage> {
                           const EdgeInsets.only(top: 10, left: 15, right: 15),
                       height: 200,
                       child: Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           TextField(
-                            onSubmitted: (value) async {
-                              if (value != "") {
-                                DatabaseHelper _dbHelper = DatabaseHelper();
-                                Task _newTask =
-                                    Task(title: value, listId: currentListId);
-                                await _dbHelper
-                                    .insertTask(_newTask)
-                                    .then((value) => Navigator.pop(context))
-                                    .then((value) => setState(() {}));
-                              }
-                            },
-                            decoration: const InputDecoration(
-                                hintText: 'New Task', border: InputBorder.none),
+                            controller: taskTitleController,
+                            decoration: InputDecoration(
+                                hintText: 'New Task',
+                                filled: true,
+                                fillColor: Colors.grey[200]),
                             autofocus: true,
                           ),
-                          const TextField(
+                          TextField(
+                            controller: taskDescriptionController,
                             decoration: InputDecoration(
                                 hintText: 'Task description',
-                                border: InputBorder.none),
+                                filled: true,
+                                fillColor: Colors.grey[200]),
                             autofocus: true,
                           ),
                           Align(
                             alignment: AlignmentDirectional.bottomEnd,
                             child: ElevatedButton(
-                                onPressed: () {}, child: const Text('Add')),
+                                onPressed: () async {
+                                  DatabaseHelper _dbHelper = DatabaseHelper();
+                                  Task _newTask = Task(
+                                      title: taskTitleController.text,
+                                      listId: currentListId,
+                                      description:
+                                          taskDescriptionController.text);
+                                  await _dbHelper
+                                      .insertTask(_newTask)
+                                      .then((value) => Navigator.pop(context))
+                                      .then((value) => setState(() {}));
+                                },
+                                child: const Text('Add')),
                           )
                         ],
                       ),
@@ -186,7 +283,8 @@ class HomePageState extends State<HomePage> {
                             top: 10, bottom: 5, left: 20, right: 20),
                         child: Text(
                           title,
-                          style: TextStyle(fontSize: 18, color: Colors.black87),
+                          style: const TextStyle(
+                              fontSize: 18, color: Colors.black87),
                         ),
                       );
                     }),
@@ -196,7 +294,7 @@ class HomePageState extends State<HomePage> {
                 future: _dbHelper.getListTasks(currentListId),
                 builder: (context, AsyncSnapshot snapshot) {
                   return ListView.builder(
-                      physics: NeverScrollableScrollPhysics(),
+                      physics: const NeverScrollableScrollPhysics(),
                       shrinkWrap: true,
                       itemCount: snapshot.data.length,
                       itemBuilder: (context, index) {
@@ -207,10 +305,11 @@ class HomePageState extends State<HomePage> {
                               MaterialPageRoute(
                                   builder: (context) =>
                                       TaskPage(task: snapshot.data![index])),
-                            );
+                            ).then((value) => setState(() {}));
                           },
                           child: TaskCard(
                             title: snapshot.data[index].title,
+                            description: snapshot.data[index].description,
                           ),
                         );
                       });

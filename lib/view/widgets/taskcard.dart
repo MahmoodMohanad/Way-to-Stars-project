@@ -2,16 +2,21 @@ import 'package:flutter/material.dart';
 
 import 'package:flutter_project/view/screens/taskpage.dart';
 
-class TaskCard extends StatelessWidget {
+class TaskCard extends StatefulWidget {
   const TaskCard({
     Key? key,
     required this.title,
-    this.description = '',
+    required this.description,
   }) : super(key: key);
 
   final String title;
   final String description;
 
+  @override
+  State<TaskCard> createState() => _TaskCardState();
+}
+
+class _TaskCardState extends State<TaskCard> {
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -24,16 +29,12 @@ class TaskCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              title,
+              widget.title,
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             ),
             Text(
-              description,
+              widget.description,
               style: const TextStyle(fontSize: 16),
-            ),
-            const Text(
-              'date',
-              style: TextStyle(fontSize: 16),
             ),
           ],
         ),
