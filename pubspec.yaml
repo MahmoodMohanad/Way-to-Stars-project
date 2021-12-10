@@ -32,7 +32,6 @@ dependencies:
     
   sqflite:
   path:
-  moor_db_viewer: ^5.0.0
 
 
   # The following adds the Cupertino Icons font to your application.

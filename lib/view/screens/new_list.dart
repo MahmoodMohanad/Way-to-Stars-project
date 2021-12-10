@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_project/api/database_helper.dart';
 import 'package:flutter_project/models/list.dart';
 
-import 'homepage.dart';
-
 class NewList extends StatefulWidget {
-  NewList({Key? key}) : super(key: key);
+  const NewList({Key? key}) : super(key: key);
 
   @override
   State<NewList> createState() => _NewListState();

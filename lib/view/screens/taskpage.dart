@@ -1,12 +1,12 @@
-import 'dart:ffi';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_project/api/database_helper.dart';
 import 'package:flutter_project/models/task.dart';
-import 'package:path/path.dart';
 
 class TaskPage extends StatefulWidget {
-  const TaskPage({Key? key, required this.task}) : super(key: key);
+  const TaskPage({
+    Key? key,
+    required this.task,
+  }) : super(key: key);
 
   final Task task;
 
@@ -18,7 +18,8 @@ class _TaskPageState extends State<TaskPage> {
   final DatabaseHelper _dbHelper = DatabaseHelper();
   String _taskTitle = "";
   String _taskDescription = "";
-  var currentList;
+  bool _taskState = false;
+  dynamic currentList;
   var taskTitleController = TextEditingController();
   var taskDescriptionController = TextEditingController();
 
@@ -26,9 +27,11 @@ class _TaskPageState extends State<TaskPage> {
   void initState() {
     _taskTitle = widget.task.title;
     _taskDescription = widget.task.description;
+    _taskState = widget.task.isDone == 0 ? false : true;
     currentList = DatabaseHelper().getList(widget.task.listId);
     taskTitleController = TextEditingController(text: _taskTitle);
     taskDescriptionController = TextEditingController(text: _taskDescription);
+    super.initState();
   }
 
   @override
@@ -112,12 +115,27 @@ class _TaskPageState extends State<TaskPage> {
                               isDone: widget.task.isDone);
                           await _dbHelper
                               .updateTask(_updatedTask)
-                              .then((value) => Navigator.pop(context));
+                              .then((value) => Navigator.pop(context))
+                              .then((value) => setState(() {}));
                         },
                         child: const Text('Save')),
                     const Spacer(),
                     ElevatedButton(
-                        onPressed: () {}, child: const Text('Mark Completed')),
+                        onPressed: () async {
+                          Task _updatedTask = widget.task;
+                          if (_updatedTask.isDone == 0) {
+                            _updatedTask.isDone = 1;
+                          } else if (_updatedTask.isDone == 1) {
+                            _updatedTask.isDone = 0;
+                          }
+                          await _dbHelper
+                              .updateTask(_updatedTask)
+                              .then((value) => Navigator.pop(context))
+                              .then((value) => setState(() {}));
+                        },
+                        child: Text(_taskState == false
+                            ? 'Mark completed'
+                            : 'Mark Uncompleted')),
                   ],
                 ),
               ),

@@ -1,27 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_project/api/database_helper.dart';
-import 'package:flutter_project/models/list.dart';
 import 'package:flutter_project/models/task.dart';
 import 'package:flutter_project/view/screens/new_list.dart';
-import 'package:flutter_project/view/screens/taskpage.dart';
 import 'package:flutter_project/view/widgets/taskcard.dart';
-import 'package:path/path.dart';
-import 'package:sqflite/sqflite.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
 
   @override
-  State<HomePage> createState() => HomePageState();
+  State<HomePage> createState() => _HomePageState();
 }
 
-class HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final DatabaseHelper _dbHelper = DatabaseHelper();
   final taskTitleController = TextEditingController();
   final taskDescriptionController = TextEditingController();
   var currentListId = 1;
   var currentList = DatabaseHelper().getList(1);
+
+  void refresh() {
+    setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +47,7 @@ class HomePageState extends State<HomePage> {
                         Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                    builder: (context) => NewList()))
+                                    builder: (context) => const NewList()))
                             .then((value) => setState(() {}));
                       },
                       child: Row(
@@ -126,7 +126,7 @@ class HomePageState extends State<HomePage> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               ListTile(
-                                title: Text('Delete List'),
+                                title: const Text('Delete List'),
                                 onTap: () {
                                   if (currentListId == 1) {
                                     showDialog(
@@ -138,55 +138,96 @@ class HomePageState extends State<HomePage> {
                                                   'You can\'t remove the default to do list'),
                                               actions: [
                                                 TextButton(
-                                                  onPressed: () =>
-                                                      Navigator.pop(
-                                                          context, 'Close'),
+                                                  onPressed: () {
+                                                    Navigator.pop(
+                                                        context, 'Close');
+                                                    Navigator.pop(context);
+                                                  },
                                                   child: const Text('Close'),
                                                 ),
                                               ]);
                                         });
                                   } else {
                                     showDialog(
-                                      context: context,
-                                      builder: (BuildContext context) =>
-                                          AlertDialog(
-                                        title: const Text('Alert'),
-                                        content: const Text(
-                                            'Are you sure you want to delete this list?'),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () => Navigator.pop(
-                                                context, 'Cancel'),
-                                            child: const Text('Cancel'),
-                                          ),
-                                          TextButton(
-                                            onPressed: () {
-                                              _dbHelper
-                                                  .deleteList(currentListId)
-                                                  .then((value) =>
-                                                      Navigator.pop(context))
-                                                  .then((value) =>
-                                                      Navigator.pop(context))
-                                                  .then(
-                                                    (value) => setState(() {
-                                                      currentListId = 1;
-                                                      currentList =
-                                                          DatabaseHelper()
-                                                              .getList(
-                                                                  currentListId);
-                                                    }),
-                                                  );
-                                            },
-                                            child: const Text('Delete'),
-                                          ),
-                                        ],
-                                      ),
-                                    );
+                                        context: context,
+                                        builder: (BuildContext context) {
+                                          return AlertDialog(
+                                            title: const Text('Alert'),
+                                            content: const Text(
+                                                'Are you sure you want to delete this list?'),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () {
+                                                  Navigator.pop(
+                                                      context, 'Cancel');
+                                                  Navigator.pop(context);
+                                                },
+                                                child: const Text('Cancel'),
+                                              ),
+                                              TextButton(
+                                                onPressed: () {
+                                                  _dbHelper
+                                                      .deleteList(currentListId)
+                                                      .then((value) =>
+                                                          Navigator.pop(
+                                                              context))
+                                                      .then((value) =>
+                                                          Navigator.pop(
+                                                              context))
+                                                      .then(
+                                                        (value) => setState(() {
+                                                          currentListId = 1;
+                                                          currentList =
+                                                              DatabaseHelper()
+                                                                  .getList(
+                                                                      currentListId);
+                                                        }),
+                                                      );
+                                                },
+                                                child: const Text('Delete'),
+                                              ),
+                                            ],
+                                          );
+                                        });
                                   }
                                 },
                               ),
                               ListTile(
-                                title: Text('Delete all completed tasks'),
+                                onTap: () {
+                                  showDialog(
+                                      context: context,
+                                      builder: (BuildContext context) {
+                                        return AlertDialog(
+                                          title: const Text('Alert'),
+                                          content: const Text(
+                                              'Are you sure you want to all completed tasks?'),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () => Navigator.pop(
+                                                  context, 'Cancel'),
+                                              child: const Text('Cancel'),
+                                            ),
+                                            TextButton(
+                                              onPressed: () {
+                                                _dbHelper
+                                                    .deleteCompletedTasks(
+                                                        currentListId)
+                                                    .then((value) =>
+                                                        Navigator.pop(context))
+                                                    .then((value) =>
+                                                        Navigator.pop(context))
+                                                    .then(
+                                                      (value) =>
+                                                          setState(() {}),
+                                                    );
+                                              },
+                                              child: const Text('Delete'),
+                                            ),
+                                          ],
+                                        );
+                                      });
+                                },
+                                title: const Text('Delete all completed tasks'),
                               ),
                             ],
                           ),
@@ -291,29 +332,40 @@ class HomePageState extends State<HomePage> {
               ),
               FutureBuilder(
                 initialData: const [],
-                future: _dbHelper.getListTasks(currentListId),
+                future: _dbHelper.getListTasks(currentListId, 0),
                 builder: (context, AsyncSnapshot snapshot) {
                   return ListView.builder(
                       physics: const NeverScrollableScrollPhysics(),
                       shrinkWrap: true,
                       itemCount: snapshot.data.length,
                       itemBuilder: (context, index) {
-                        return GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) =>
-                                      TaskPage(task: snapshot.data![index])),
-                            ).then((value) => setState(() {}));
-                          },
-                          child: TaskCard(
-                            title: snapshot.data[index].title,
-                            description: snapshot.data[index].description,
-                          ),
+                        return TaskCard(
+                          notifyParent: refresh,
+                          task: snapshot.data[index],
                         );
                       });
                 },
+              ),
+              ExpansionTile(
+                title: const Text('Completed Tasks'),
+                children: [
+                  FutureBuilder(
+                    initialData: const [],
+                    future: _dbHelper.getListTasks(currentListId, 1),
+                    builder: (context, AsyncSnapshot snapshot) {
+                      return ListView.builder(
+                          physics: const NeverScrollableScrollPhysics(),
+                          shrinkWrap: true,
+                          itemCount: snapshot.data.length,
+                          itemBuilder: (context, index) {
+                            return TaskCard(
+                              notifyParent: refresh,
+                              task: snapshot.data[index],
+                            );
+                          });
+                    },
+                  ),
+                ],
               ),
             ],
           )),

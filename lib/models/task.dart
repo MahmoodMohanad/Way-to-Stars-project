@@ -1,9 +1,9 @@
 class Task {
-  var id;
+  dynamic id;
   final int listId;
   final String title;
   final String description;
-  final int isDone;
+  int isDone;
 
   Task({
     this.id,

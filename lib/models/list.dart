@@ -1,6 +1,6 @@
 class ToDoList {
-  var id;
-  final String title;
+  dynamic id;
+  String title;
 
   ToDoList({
     this.id,

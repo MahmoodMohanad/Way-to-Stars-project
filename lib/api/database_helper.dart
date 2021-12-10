@@ -62,12 +62,12 @@ class DatabaseHelper {
     return result.first;
   }
 
-  Future<List<Task>> getListTasks(int listId) async {
+  Future<List<Task>> getListTasks(int listId, int isDone) async {
     Database _db = await database();
     List<Map> taskMap = await _db.query('tasks',
         columns: ['id', 'listid', 'title', 'description', 'isDone'],
-        where: 'listid=?',
-        whereArgs: [listId]);
+        where: 'listid=? and isDone=?',
+        whereArgs: [listId, isDone]);
     return List.generate(taskMap.length, (i) {
       return Task(
           id: taskMap[i]['id'],
@@ -84,6 +84,12 @@ class DatabaseHelper {
         .update('tasks', task.toMap(), where: 'id=?', whereArgs: [task.id]);
   }
 
+  Future<void> updateList(ToDoList list) async {
+    Database _db = await database();
+    await _db
+        .update('lists', list.toMap(), where: 'id=?', whereArgs: [list.id]);
+  }
+
   Future<void> deleteTask(int id) async {
     Database _db = await database();
     await _db.delete('tasks', where: 'id=?', whereArgs: [id]);
@@ -92,5 +98,12 @@ class DatabaseHelper {
   Future<void> deleteList(int id) async {
     Database _db = await database();
     await _db.delete('lists', where: 'id=?', whereArgs: [id]);
+    await _db.delete('tasks', where: 'listid=?', whereArgs: [id]);
+  }
+
+  Future<void> deleteCompletedTasks(int listId) async {
+    Database _db = await database();
+    await _db.delete('tasks',
+        where: 'isDone=? and listid=?', whereArgs: [1, listId]);
   }
 }
